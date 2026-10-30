@@ -5,12 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AI MSME CFO Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @media print {
+      .no-print { display: none !important; }
+      body { background-color: white !important; color: black !important; padding: 0 !important; }
+      .print-card { background-color: white !important; border: 1px solid #ccc !important; color: black !important; }
+      #reportText { color: black !important; }
+    }
+  </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen p-4 sm:p-8 font-sans">
   <div class="max-w-3xl mx-auto space-y-6">
     
     <!-- Header -->
-    <header class="border-b border-slate-800 pb-4 flex items-center justify-between">
+    <header class="border-b border-slate-800 pb-4 flex items-center justify-between no-print">
       <div>
         <h1 class="text-2xl font-bold text-white">AI MSME CFO Dashboard</h1>
         <p class="text-slate-400 text-sm">Instant financial health audit & AI report</p>
@@ -21,7 +29,7 @@
     </header>
 
     <!-- API Key Input -->
-    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-2">
+    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-2 no-print">
       <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">
         Gemini API Key
       </label>
@@ -34,26 +42,26 @@
     </div>
 
     <!-- Financial Inputs -->
-    <div class="bg-slate-900 border border-slate-800 p-6 rounded-xl space-y-4">
+    <div class="bg-slate-900 border border-slate-800 p-6 rounded-xl space-y-4 no-print">
       <h2 class="text-base font-semibold text-white">Monthly Figures (₹)</h2>
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
           <label class="block text-xs text-slate-400 mb-1">Monthly Revenue</label>
-          <input id="revenue" type="number" placeholder="376000" value="376000" class="w-full p-3 bg-slate-950 border border-slate-800 rounded-lg text-white" />
+          <input id="revenue" type="number" placeholder="376000" class="w-full p-3 bg-slate-950 border border-slate-800 rounded-lg text-white" />
         </div>
         <div>
           <label class="block text-xs text-slate-400 mb-1">COGS (Cost of Goods)</label>
-          <input id="cogs" type="number" placeholder="293000" value="293000" class="w-full p-3 bg-slate-950 border border-slate-800 rounded-lg text-white" />
+          <input id="cogs" type="number" placeholder="293000" class="w-full p-3 bg-slate-950 border border-slate-800 rounded-lg text-white" />
         </div>
         <div>
           <label class="block text-xs text-slate-400 mb-1">OPEX (Operating Expenses)</label>
-          <input id="opex" type="number" placeholder="65000" value="65000" class="w-full p-3 bg-slate-950 border border-slate-800 rounded-lg text-white" />
+          <input id="opex" type="number" placeholder="65000" class="w-full p-3 bg-slate-950 border border-slate-800 rounded-lg text-white" />
         </div>
       </div>
 
       <div>
         <label class="block text-xs text-slate-400 mb-1">Business Context / Operational Challenges</label>
-        <textarea id="context" rows="2" placeholder="e.g. Udhar credit lockup and competition from local quick-commerce apps like Blinkit." class="w-full p-3 bg-slate-950 border border-slate-800 rounded-lg text-white text-sm">Facing heavy pressure from customer Udhar credit lockup and local quick-commerce apps like Blinkit.</textarea>
+        <textarea id="context" rows="2" placeholder="e.g. Udhar credit lockup and competition from local quick-commerce apps like Blinkit." class="w-full p-3 bg-slate-950 border border-slate-800 rounded-lg text-white text-sm"></textarea>
       </div>
 
       <button onclick="generateReport()" id="btn" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 font-semibold text-white rounded-lg transition shadow-lg shadow-indigo-950">
@@ -62,7 +70,7 @@
     </div>
 
     <!-- Live Calculated Metrics -->
-    <div id="metrics" class="grid grid-cols-2 sm:grid-cols-4 gap-4 hidden">
+    <div id="metrics" class="grid grid-cols-2 sm:grid-cols-4 gap-4 hidden print-card">
       <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
         <span class="text-xs text-slate-400">Gross Margin</span>
         <p id="gmVal" class="text-xl font-bold text-emerald-400 mt-1">-</p>
@@ -81,15 +89,98 @@
       </div>
     </div>
 
+    <!-- Interactive Sensitivity Simulator -->
+    <div id="simulator" class="bg-slate-900 border border-slate-800 p-6 rounded-xl hidden space-y-4 no-print">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-semibold text-white">⚡ Interactive Sensitivity Simulator</h3>
+        <span class="text-xs text-indigo-400 font-mono">Live Forecast</span>
+      </div>
+      
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <!-- Slider 1: Gross Margin Target -->
+        <div class="space-y-2">
+          <div class="flex justify-between text-xs">
+            <span class="text-slate-400">Target Gross Margin:</span>
+            <span id="gmTargetDisp" class="font-bold text-emerald-400">26.0%</span>
+          </div>
+          <input id="gmSlider" type="range" min="15" max="40" step="0.5" value="26" class="w-full accent-indigo-500 bg-slate-800 h-2 rounded-lg cursor-pointer" oninput="updateSimulation()" />
+          <p class="text-[11px] text-slate-500">Current GM: <span id="currentGmDisp">22.1%</span></p>
+        </div>
+
+        <!-- Slider 2: Udhar Recovery % -->
+        <div class="space-y-2">
+          <div class="flex justify-between text-xs">
+            <span class="text-slate-400">Udhar Recovery Target:</span>
+            <span id="udharDisp" class="font-bold text-indigo-400">50%</span>
+          </div>
+          <input id="udharSlider" type="range" min="0" max="100" step="5" value="50" class="w-full accent-indigo-500 bg-slate-800 h-2 rounded-lg cursor-pointer" oninput="updateSimulation()" />
+          <p class="text-[11px] text-slate-500">Assumed Overdue Credit: ₹36,000</p>
+        </div>
+      </div>
+
+      <!-- Impact Summary Box -->
+      <div class="p-4 bg-indigo-950/40 border border-indigo-800/50 rounded-lg flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div>
+          <span class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Simulated Financial Impact</span>
+          <p class="text-xs text-slate-300 mt-0.5">Hitting these metrics unlocks:</p>
+        </div>
+        <div class="text-right flex gap-4">
+          <div>
+            <span class="text-[10px] text-slate-400 block uppercase">Monthly Profit Boost</span>
+            <span id="simProfitBoost" class="text-sm font-bold text-emerald-400">+₹14,664/mo</span>
+          </div>
+          <div>
+            <span class="text-[10px] text-slate-400 block uppercase">Cash Recovered</span>
+            <span id="simCashRecovered" class="text-sm font-bold text-indigo-400">+₹18,000</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- AI CFO Output Report -->
-    <div id="reportBox" class="bg-slate-900 border border-slate-800 p-6 rounded-xl hidden space-y-3">
-      <h3 class="text-lg font-semibold text-white border-b border-slate-800 pb-2">CFO Audit Report</h3>
+    <div id="reportBox" class="bg-slate-900 border border-slate-800 p-6 rounded-xl hidden space-y-4 print-card">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-lg font-semibold text-white">CFO Audit Report</h3>
+        <button onclick="window.print()" class="no-print px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg border border-slate-700 transition flex items-center gap-1.5 shadow">
+          📄 Export / Print Report
+        </button>
+      </div>
       <div id="reportText" class="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap"></div>
     </div>
 
   </div>
 
   <script>
+    // 1. Store Key Local History: Load saved items from localStorage on DOM load
+    window.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('apiKey').value = localStorage.getItem('cfo_gemini_key') || '';
+      document.getElementById('revenue').value = localStorage.getItem('cfo_revenue') || '376000';
+      document.getElementById('cogs').value = localStorage.getItem('cfo_cogs') || '293000';
+      document.getElementById('opex').value = localStorage.getItem('cfo_opex') || '65000';
+      document.getElementById('context').value = localStorage.getItem('cfo_context') || 'Facing heavy pressure from customer Udhar credit lockup and local quick-commerce apps like Blinkit.';
+    });
+
+    let currentMetrics = { rev: 0, cogs: 0, opex: 0, gm: 0 };
+
+    // 2. Interactive Scenario / Sensitivity Simulator logic
+    function updateSimulation() {
+      const targetGm = parseFloat(document.getElementById('gmSlider').value) || 0;
+      const udharPct = parseFloat(document.getElementById('udharSlider').value) || 0;
+      const totalUdhar = 36000; // Baseline overdue Udhar assumption
+
+      document.getElementById('gmTargetDisp').innerText = targetGm.toFixed(1) + '%';
+      document.getElementById('udharDisp').innerText = udharPct + '%';
+
+      if (currentMetrics.rev > 0) {
+        const extraGmPct = targetGm - currentMetrics.gm;
+        const extraMonthlyProfit = Math.max(0, (extraGmPct / 100) * currentMetrics.rev);
+        const cashRecovered = (udharPct / 100) * totalUdhar;
+
+        document.getElementById('simProfitBoost').innerText = '+₹' + Math.round(extraMonthlyProfit).toLocaleString('en-IN') + '/mo';
+        document.getElementById('simCashRecovered').innerText = '+₹' + Math.round(cashRecovered).toLocaleString('en-IN');
+      }
+    }
+
     async function generateReport() {
       const apiKey = document.getElementById('apiKey').value.trim();
       if (!apiKey) return alert('Please enter your Gemini API key first!');
@@ -101,17 +192,33 @@
 
       if (!rev) return alert('Please enter monthly revenue.');
 
+      // Save user inputs to localStorage
+      localStorage.setItem('cfo_gemini_key', apiKey);
+      localStorage.setItem('cfo_revenue', rev);
+      localStorage.setItem('cfo_cogs', cogs);
+      localStorage.setItem('cfo_opex', opex);
+      localStorage.setItem('cfo_context', userContext);
+
       // Calculate ratios
       const grossProfit = rev - cogs;
       const netProfit = grossProfit - opex;
-      const gm = ((grossProfit / rev) * 100).toFixed(1);
-      const om = ((netProfit / rev) * 100).toFixed(1);
+      const gm = ((grossProfit / rev) * 100);
+      const om = ((netProfit / rev) * 100);
 
-      document.getElementById('gmVal').innerText = gm + '%';
-      document.getElementById('omVal').innerText = om + '%';
+      currentMetrics = { rev, cogs, opex, gm };
+
+      document.getElementById('gmVal').innerText = gm.toFixed(1) + '%';
+      document.getElementById('omVal').innerText = om.toFixed(1) + '%';
       document.getElementById('npVal').innerText = '₹' + netProfit.toLocaleString('en-IN');
       document.getElementById('statusVal').innerText = om > 10 ? 'Healthy' : (om > 0 ? 'Tight Margin' : 'Loss Making');
       document.getElementById('metrics').classList.remove('hidden');
+
+      // Initialize Simulator
+      document.getElementById('currentGmDisp').innerText = gm.toFixed(1) + '%';
+      document.getElementById('gmSlider').min = Math.floor(gm);
+      document.getElementById('gmSlider').value = Math.max(Math.ceil(gm + 4), 26);
+      document.getElementById('simulator').classList.remove('hidden');
+      updateSimulation();
 
       const reportBox = document.getElementById('reportBox');
       const reportText = document.getElementById('reportText');
@@ -127,8 +234,8 @@
 - Revenue: ₹${rev}
 - COGS: ₹${cogs}
 - OPEX: ₹${opex}
-- Gross Margin: ${gm}%
-- Operating Margin: ${om}%
+- Gross Margin: ${gm.toFixed(1)}%
+- Operating Margin: ${om.toFixed(1)}%
 - Business context: ${userContext}
 
 Provide a concise 4-part CFO Audit Report:
