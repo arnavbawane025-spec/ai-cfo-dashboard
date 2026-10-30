@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI MSME CFO Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen p-4 sm:p-8 font-sans">
+  <div class="max-w-3xl mx-auto space-y-6">
+    
+    <!-- Header -->
+    <header class="border-b border-slate-800 pb-4 flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-white">AI MSME CFO Dashboard</h1>
+        <p class="text-slate-400 text-sm">Instant financial health audit & AI report</p>
+      </div>
+      <span class="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-semibold rounded-full">
+        Ready
+      </span>
+    </header>
+
+    <!-- API Key Input -->
+    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-2">
+      <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">
+        Gemini API Key
+      </label>
+      <input 
+        id="apiKey" 
+        type="password" 
+        placeholder="Paste your AI Studio GEMINI_API_KEY here" 
+        class="w-full p-3 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500"
+      />
+    </div>
+
+    <!-- Financial Inputs -->
+    <div class="bg-slate-900 border border-slate-800 p-6 rounded-xl space-y-4">
+      <h2 class="text-base font-semibold text-white">Monthly Figures (₹)</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Monthly Revenue</label>
+          <input id="revenue" type="number" placeholder="376000" value="376000" class="w-full p-3 bg-slate-950 border border-slate-800 rounded-lg text-white" />
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">COGS (Cost of Goods)</label>
+          <input id="cogs" type="number" placeholder="293000" value="293000" class="w-full p-3 bg-slate-950 border border-slate-800 rounded-lg text-white" />
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">OPEX (Operating Expenses)</label>
+          <input id="opex" type="number" placeholder="65000" value="65000" class="w-full p-3 bg-slate-950 border border-slate-800 rounded-lg text-white" />
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs text-slate-400 mb-1">Business Context / Operational Challenges</label>
+        <textarea id="context" rows="2" placeholder="e.g. Udhar credit lockup and competition from local quick-commerce apps like Blinkit." class="w-full p-3 bg-slate-950 border border-slate-800 rounded-lg text-white text-sm">Facing heavy pressure from customer Udhar credit lockup and local quick-commerce apps like Blinkit.</textarea>
+      </div>
+
+      <button onclick="generateReport()" id="btn" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 font-semibold text-white rounded-lg transition shadow-lg shadow-indigo-950">
+        Run CFO Diagnostic
+      </button>
+    </div>
+
+    <!-- Live Calculated Metrics -->
+    <div id="metrics" class="grid grid-cols-2 sm:grid-cols-4 gap-4 hidden">
+      <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+        <span class="text-xs text-slate-400">Gross Margin</span>
+        <p id="gmVal" class="text-xl font-bold text-emerald-400 mt-1">-</p>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+        <span class="text-xs text-slate-400">Operating Margin</span>
+        <p id="omVal" class="text-xl font-bold text-indigo-400 mt-1">-</p>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+        <span class="text-xs text-slate-400">Net Profit</span>
+        <p id="npVal" class="text-xl font-bold text-white mt-1">-</p>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+        <span class="text-xs text-slate-400">Health Status</span>
+        <p id="statusVal" class="text-xl font-bold text-amber-400 mt-1">-</p>
+      </div>
+    </div>
+
+    <!-- AI CFO Output Report -->
+    <div id="reportBox" class="bg-slate-900 border border-slate-800 p-6 rounded-xl hidden space-y-3">
+      <h3 class="text-lg font-semibold text-white border-b border-slate-800 pb-2">CFO Audit Report</h3>
+      <div id="reportText" class="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap"></div>
+    </div>
+
+  </div>
+
+  <script>
+    async function generateReport() {
+      const apiKey = document.getElementById('apiKey').value.trim();
+      if (!apiKey) return alert('Please enter your Gemini API key first!');
+
+      const rev = parseFloat(document.getElementById('revenue').value) || 0;
+      const cogs = parseFloat(document.getElementById('cogs').value) || 0;
+      const opex = parseFloat(document.getElementById('opex').value) || 0;
+      const userContext = document.getElementById('context').value;
+
+      if (!rev) return alert('Please enter monthly revenue.');
+
+      // Calculate ratios
+      const grossProfit = rev - cogs;
+      const netProfit = grossProfit - opex;
+      const gm = ((grossProfit / rev) * 100).toFixed(1);
+      const om = ((netProfit / rev) * 100).toFixed(1);
+
+      document.getElementById('gmVal').innerText = gm + '%';
+      document.getElementById('omVal').innerText = om + '%';
+      document.getElementById('npVal').innerText = '₹' + netProfit.toLocaleString('en-IN');
+      document.getElementById('statusVal').innerText = om > 10 ? 'Healthy' : (om > 0 ? 'Tight Margin' : 'Loss Making');
+      document.getElementById('metrics').classList.remove('hidden');
+
+      const reportBox = document.getElementById('reportBox');
+      const reportText = document.getElementById('reportText');
+      const btn = document.getElementById('btn');
+
+      reportBox.classList.remove('hidden');
+      reportText.innerText = "Analyzing financial parameters & generating audit report...";
+      btn.disabled = true;
+      btn.innerText = "Generating Report...";
+
+      try {
+        const prompt = `Act as an expert MSME CFO. Analyze these monthly figures for a local store:
+- Revenue: ₹${rev}
+- COGS: ₹${cogs}
+- OPEX: ₹${opex}
+- Gross Margin: ${gm}%
+- Operating Margin: ${om}%
+- Business context: ${userContext}
+
+Provide a concise 4-part CFO Audit Report:
+1. Financial Health Diagnostic (Break down the margins and profitability)
+2. Working Capital & Cash Flow Assessment (Address Udhar credit lockup)
+3. Competitive Response Strategy (How to handle quick-commerce pressure)
+4. Top 3 Actionable CFO Next Steps (Clear, prioritized action items)`;
+
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }]
+          })
+        });
+
+        const data = await res.json();
+        if (data.error) {
+          reportText.innerText = "API Error: " + data.error.message;
+        } else {
+          reportText.innerText = data.candidates[0].content.parts[0].text;
+        }
+      } catch (err) {
+        reportText.innerText = "Error connecting to AI service: " + err.message;
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "Run CFO Diagnostic";
+      }
+    }
+  </script>
+</body>
+</html>
