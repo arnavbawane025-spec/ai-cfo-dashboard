@@ -1,1605 +1,428 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#020617">
-  <meta name="description" content="AI-powered financial health diagnostic dashboard for Indian MSMEs.">
-  <title>AI MSME CFO Dashboard</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI MSME CFO Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  input[type=range] { accent-color: #10b981; width: 100%; }
+  input:focus, textarea:focus { outline: none; }
+  .spinner {
+    width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.35);
+    border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite;
+    display: inline-block;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <style>
-    input[type="range"] {
-      accent-color: #10b981;
-      width: 100%;
-      cursor: pointer;
-    }
-
-    input:focus, textarea:focus {
-      outline: none;
-    }
-
-    .spinner {
-      width: 17px;
-      height: 17px;
-      border: 2px solid rgba(255,255,255,.3);
-      border-top-color: white;
-      border-radius: 50%;
-      animation: spin .8s linear infinite;
-      display: inline-block;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    .metric-card {
-      transition: border-color .2s ease, transform .2s ease;
-    }
-
-    .metric-card:hover {
-      border-color: #475569;
-      transform: translateY(-2px);
-    }
-
-    .report-content h2 {
-      font-size: 1.1rem;
-      font-weight: 700;
-      margin-top: 24px;
-      margin-bottom: 10px;
-      color: #34d399;
-    }
-
-    .report-content h2:first-child {
-      margin-top: 0;
-    }
-
-    .report-content p {
-      margin: 8px 0;
-    }
-
-    .report-content ul {
-      list-style: disc;
-      padding-left: 22px;
-      margin: 8px 0;
-    }
-
-    .report-content ol {
-      list-style: decimal;
-      padding-left: 22px;
-      margin: 8px 0;
-    }
-
-    .report-content li {
-      margin: 6px 0;
-    }
-
-    .report-content strong {
-      color: #f8fafc;
-      font-weight: 700;
-    }
-
-    .report-content code {
-      background: #1e293b;
-      padding: 2px 5px;
-      border-radius: 4px;
-    }
-
-    .error-box {
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
-    }
-
-    @media print {
-      @page {
-        size: A4;
-        margin: 15mm;
-      }
-
-      html, body {
-        background: white !important;
-        color: black !important;
-        font-size: 11pt;
-      }
-
-      body {
-        min-height: auto !important;
-      }
-
-      .no-print,
-      #apiSection,
-      #inputSection,
-      #simSection,
-      #statusBadge {
-        display: none !important;
-      }
-
-      .print-card,
-      .metric-card {
-        background: white !important;
-        color: black !important;
-        border: 1px solid #ccc !important;
-        box-shadow: none !important;
-        transform: none !important;
-        break-inside: avoid;
-      }
-
-      .print-card * {
-        color: black !important;
-      }
-
-      #reportSection {
-        display: block !important;
-        margin-top: 20px;
-        page-break-inside: auto;
-      }
-
-      #reportBody {
-        color: black !important;
-        font-size: 10.5pt;
-        line-height: 1.65;
-      }
-
-      .report-content h2 {
-        color: #111827 !important;
-        border-bottom: 1px solid #ddd;
-        padding-bottom: 5px;
-      }
-
-      .report-content strong {
-        color: black !important;
-      }
-
-      .report-content code {
-        background: #eee !important;
-      }
-
-      .print-title {
-        display: block !important;
-      }
-
-      .print-subtitle {
-        display: block !important;
-      }
-
-      #metricsSection {
-        margin-top: 20px;
-      }
-
-      .metric-card {
-        padding: 12px !important;
-      }
-
-      .print-card {
-        break-inside: avoid;
-      }
-    }
-
-    .print-title,
-    .print-subtitle {
-      display: none;
-    }
-  </style>
+  @media print {
+    @page { margin: 14mm; }
+    html, body { background: #fff !important; color: #000 !important; }
+    .no-print { display: none !important; }
+    .print-card { background: #fff !important; border: 1px solid #999 !important; color: #000 !important; box-shadow: none !important; }
+    .print-card * { color: #000 !important; }
+    #reportBody { color: #000 !important; font-size: 12pt; line-height: 1.5; }
+    .print-title { display: block !important; color: #000 !important; }
+    .badge-print { border: 1px solid #000 !important; background: #fff !important; }
+  }
+  .print-title { display: none; }
+</style>
 </head>
-
 <body class="bg-slate-950 text-slate-100 min-h-screen antialiased">
 
 <div class="max-w-5xl mx-auto px-4 py-8 space-y-6">
 
-  <!-- HEADER -->
-
-  <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-
+  <!-- Header -->
+  <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
     <div>
-      <div class="flex items-center gap-2 mb-2">
-        <span class="text-2xl">📊</span>
-        <span class="text-xs font-semibold tracking-widest text-emerald-400 uppercase">
-          Financial Intelligence
-        </span>
-      </div>
-
-      <h1 class="text-2xl sm:text-3xl font-bold tracking-tight">
-        AI MSME CFO Dashboard
-      </h1>
-
-      <p class="text-slate-400 text-sm mt-2">
-        Instant financial health audit for Indian MSMEs, retail stores,
-        Kirana shops and manufacturers.
-      </p>
+      <h1 class="text-2xl sm:text-3xl font-bold tracking-tight">AI MSME CFO Dashboard</h1>
+      <p class="text-slate-400 text-sm mt-1">Instant financial health audit for Indian retail stores, Kirana shops and manufacturers</p>
     </div>
-
-    <span id="statusBadge"
-      class="no-print inline-flex items-center gap-2 self-start px-3 py-2 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-
+    <span id="statusBadge" class="no-print inline-flex items-center gap-2 self-start sm:self-auto px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
       <span id="statusDot" class="w-2 h-2 rounded-full bg-emerald-400"></span>
       <span id="statusText">Ready</span>
     </span>
-
   </header>
 
-
-  <!-- API KEY -->
-
-  <section id="apiSection"
-    class="no-print bg-slate-900 border border-slate-800 rounded-xl p-5">
-
-    <div class="flex items-center justify-between gap-3 mb-3">
-
-      <label for="apiKey" class="text-sm font-semibold">
-        Google Gemini API Key
-      </label>
-
-      <span class="text-xs text-slate-500">GEMINI_API_KEY</span>
-
-    </div>
-
-    <input
-      id="apiKey"
-      type="password"
-      autocomplete="off"
-      spellcheck="false"
-      placeholder="Paste your Gemini API key here"
-      class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-lg px-3 py-3 text-sm">
-
-    <p class="text-xs text-slate-500 mt-3 leading-relaxed">
-      Your key is stored in this browser's localStorage and sent to
-      Google's Gemini API. Avoid using this application on shared devices.
-      Do not publish a browser-based API key.
-    </p>
-
+  <!-- API Key -->
+  <section class="no-print bg-slate-900 border border-slate-800 rounded-xl p-5">
+    <label for="apiKey" class="block text-sm font-semibold mb-2">Google Gemini API Key (GEMINI_API_KEY)</label>
+    <input id="apiKey" type="password" autocomplete="off" placeholder="Paste your Gemini API key"
+      class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-lg px-3 py-2 text-sm">
+    <p class="text-xs text-slate-500 mt-2">Stored only in this browser's localStorage and sent directly to Google's API.</p>
   </section>
 
-
-  <!-- FINANCIAL INPUTS -->
-
-  <section id="inputSection"
-    class="no-print bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-5">
-
-    <div>
-      <h2 class="text-lg font-semibold">Financial Inputs</h2>
-      <p class="text-xs text-slate-500 mt-1">
-        Enter your monthly business financial figures in INR.
-      </p>
-    </div>
-
+  <!-- Inputs -->
+  <section class="no-print bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
+    <h2 class="text-lg font-semibold">Financial Inputs (Monthly)</h2>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-
       <div>
-        <label for="revenue"
-          class="block text-sm text-slate-300 mb-2">
-          Monthly Revenue (₹)
-        </label>
-
-        <input id="revenue"
-          type="number"
-          min="0"
-          step="1"
-          value="376000"
-          class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-lg px-3 py-3 text-sm">
+        <label for="revenue" class="block text-sm text-slate-300 mb-1">Monthly Revenue (₹)</label>
+        <input id="revenue" type="number" min="0" step="1" value="376000"
+          class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-lg px-3 py-2 text-sm">
       </div>
-
       <div>
-        <label for="cogs"
-          class="block text-sm text-slate-300 mb-2">
-          Cost of Goods Sold / COGS (₹)
-        </label>
-
-        <input id="cogs"
-          type="number"
-          min="0"
-          step="1"
-          value="293000"
-          class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-lg px-3 py-3 text-sm">
+        <label for="cogs" class="block text-sm text-slate-300 mb-1">Cost of Goods Sold / COGS (₹)</label>
+        <input id="cogs" type="number" min="0" step="1" value="293000"
+          class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-lg px-3 py-2 text-sm">
       </div>
-
       <div>
-        <label for="opex"
-          class="block text-sm text-slate-300 mb-2">
-          Operating Expenses / OPEX (₹)
-        </label>
-
-        <input id="opex"
-          type="number"
-          min="0"
-          step="1"
-          value="65000"
-          class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-lg px-3 py-3 text-sm">
+        <label for="opex" class="block text-sm text-slate-300 mb-1">Operating Expenses / OPEX (₹)</label>
+        <input id="opex" type="number" min="0" step="1" value="65000"
+          class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-lg px-3 py-2 text-sm">
       </div>
-
     </div>
-
     <div>
-
-      <label for="context"
-        class="block text-sm text-slate-300 mb-2">
-        Business Context / Challenges
-      </label>
-
-      <textarea id="context"
-        rows="3"
-        maxlength="3000"
-        class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-lg px-3 py-3 text-sm resize-y">Facing heavy pressure from customer Udhar credit lockup and local quick-commerce apps like Blinkit.</textarea>
-
-      <p class="text-xs text-slate-500 mt-2">
-        Describe cash-flow issues, customer credit, competition,
-        inventory problems or operational challenges.
-      </p>
-
+      <label for="context" class="block text-sm text-slate-300 mb-1">Business Context / Challenges</label>
+      <textarea id="context" rows="3"
+        class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-lg px-3 py-2 text-sm">Facing heavy pressure from customer Udhar credit lockup and local quick-commerce apps like Blinkit.</textarea>
     </div>
-
-    <button id="runBtn"
-      type="button"
-      class="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold px-6 py-3 rounded-lg transition">
-
+    <button id="runBtn" type="button"
+      class="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold px-5 py-2.5 rounded-lg transition">
       <span id="runSpinner" class="spinner hidden"></span>
       <span id="runLabel">Run CFO Diagnostic</span>
-
     </button>
-
-    <div id="inputError"
-      role="alert"
-      class="hidden text-sm text-red-300 bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3">
-    </div>
-
+    <div id="inputError" class="hidden text-sm text-red-300 bg-red-500/10 border border-red-500/30 rounded-lg px-3 py-2"></div>
   </section>
 
-
-  <!-- LIVE METRICS -->
-
-  <section id="metricsSection"
-    class="print-card bg-slate-900 border border-slate-800 rounded-xl p-5">
-
-    <h1 class="print-title text-xl font-bold mb-2">
-      AI MSME CFO Audit Report
-    </h1>
-
-    <p class="print-subtitle text-sm mb-4">
-      Monthly financial performance summary
-    </p>
-
-    <div class="flex items-center justify-between mb-5">
-
-      <div>
-        <h2 class="text-lg font-semibold">
-          Live Financial Metrics
-        </h2>
-
-        <p class="text-xs text-slate-500 mt-1">
-          Automatically updated from your financial inputs.
-        </p>
+  <!-- Metrics -->
+  <section id="metricsSection" class="print-card bg-slate-900 border border-slate-800 rounded-xl p-5">
+    <h1 class="print-title text-xl font-bold mb-3">AI MSME CFO Audit Report</h1>
+    <h2 class="text-lg font-semibold mb-4">Live Financial Metrics</h2>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="bg-slate-950 border border-slate-800 rounded-lg p-4 print-card">
+        <p class="text-xs uppercase tracking-wide text-slate-400">Gross Margin</p>
+        <p id="mGM" class="text-2xl font-bold mt-1">-</p>
       </div>
-
-      <span class="text-xs text-emerald-400 font-medium no-print">
-        ● LIVE CALCULATION
-      </span>
-
+      <div class="bg-slate-950 border border-slate-800 rounded-lg p-4 print-card">
+        <p class="text-xs uppercase tracking-wide text-slate-400">Operating Margin</p>
+        <p id="mOM" class="text-2xl font-bold mt-1">-</p>
+      </div>
+      <div class="bg-slate-950 border border-slate-800 rounded-lg p-4 print-card">
+        <p class="text-xs uppercase tracking-wide text-slate-400">Net Profit</p>
+        <p id="mNP" class="text-2xl font-bold mt-1">-</p>
+      </div>
+      <div class="bg-slate-950 border border-slate-800 rounded-lg p-4 print-card">
+        <p class="text-xs uppercase tracking-wide text-slate-400">Financial Health</p>
+        <span id="mHealth" class="badge-print inline-block mt-2 px-3 py-1 rounded-full text-sm font-semibold border bg-slate-800 text-slate-300 border-slate-700">-</span>
+      </div>
     </div>
-
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-
-      <div class="metric-card bg-slate-950 border border-slate-800 rounded-lg p-4">
-        <p class="text-xs uppercase tracking-wide text-slate-400">
-          Gross Margin
-        </p>
-        <p id="mGM" class="text-2xl font-bold mt-2">22.1%</p>
-        <p class="text-xs text-slate-500 mt-1">Gross profit / Revenue</p>
-      </div>
-
-      <div class="metric-card bg-slate-950 border border-slate-800 rounded-lg p-4">
-        <p class="text-xs uppercase tracking-wide text-slate-400">
-          Operating Margin
-        </p>
-        <p id="mOM" class="text-2xl font-bold mt-2">4.8%</p>
-        <p class="text-xs text-slate-500 mt-1">Operating profit / Revenue</p>
-      </div>
-
-      <div class="metric-card bg-slate-950 border border-slate-800 rounded-lg p-4">
-        <p class="text-xs uppercase tracking-wide text-slate-400">
-          Net Profit
-        </p>
-        <p id="mNP" class="text-2xl font-bold mt-2">₹18,000</p>
-        <p class="text-xs text-slate-500 mt-1">Gross profit - OPEX</p>
-      </div>
-
-      <div class="metric-card bg-slate-950 border border-slate-800 rounded-lg p-4">
-        <p class="text-xs uppercase tracking-wide text-slate-400">
-          Financial Health
-        </p>
-
-        <span id="mHealth"
-          class="inline-block mt-3 px-3 py-1 rounded-full text-sm font-semibold border bg-amber-500/10 text-amber-400 border-amber-500/30">
-          Tight Margin
-        </span>
-      </div>
-
-    </div>
-
-    <p class="text-xs text-slate-500 mt-4">
-      Note: Net profit here is an operating surplus proxy before
-      interest, taxes, depreciation and other unentered expenses.
-    </p>
-
   </section>
 
-
-  <!-- SCENARIO SIMULATOR -->
-
-  <section id="simSection"
-    class="hidden no-print bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-7">
+  <!-- Simulator -->
+  <section id="simSection" class="hidden no-print bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-6">
+    <h2 class="text-lg font-semibold">Sensitivity and Scenario Simulator</h2>
 
     <div>
-      <h2 class="text-lg font-semibold">
-        Sensitivity & Scenario Simulator
-      </h2>
-
-      <p class="text-xs text-slate-500 mt-1">
-        Test how pricing improvements and credit recovery could
-        improve your business position.
+      <div class="flex justify-between items-baseline mb-2">
+        <label for="gmSlider" class="text-sm text-slate-300">Target Gross Margin %</label>
+        <span id="gmValue" class="text-sm font-semibold text-emerald-400">-</span>
+      </div>
+      <input id="gmSlider" type="range" min="0" max="40" step="0.1" value="0">
+      <div class="flex justify-between text-xs text-slate-500 mt-1">
+        <span id="gmMinLbl">Current</span><span>40%</span>
+      </div>
+      <p class="mt-3 text-sm text-slate-300">Projected monthly net profit boost:
+        <span id="gmBoost" class="font-bold text-emerald-400">₹0</span>
+        <span id="gmNewProfit" class="text-slate-500"></span>
       </p>
     </div>
 
-
-    <!-- GROSS MARGIN SLIDER -->
-
     <div>
-
-      <div class="flex justify-between items-center mb-3 gap-3">
-
-        <label for="gmSlider" class="text-sm font-semibold">
-          Target Gross Margin %
-        </label>
-
-        <span id="gmValue"
-          class="text-sm font-bold text-emerald-400">
-          26.1%
-        </span>
-
+      <div class="flex justify-between items-baseline mb-2">
+        <label for="udharSlider" class="text-sm text-slate-300">Udhar Overdue Recovery % (baseline credit: ₹36,000)</label>
+        <span id="udharValue" class="text-sm font-semibold text-emerald-400">50%</span>
       </div>
-
-      <input id="gmSlider"
-        type="range"
-        min="0"
-        max="40"
-        step="0.1"
-        value="26.1">
-
-      <div class="flex justify-between text-xs text-slate-500 mt-2">
-        <span id="gmMinLbl">Current: 22.1%</span>
-        <span id="gmMaxLbl">40%</span>
-      </div>
-
-      <div class="mt-4 bg-slate-950 border border-slate-800 rounded-lg p-4">
-
-        <p class="text-xs text-slate-400">
-          Projected Monthly Net Profit Improvement
-        </p>
-
-        <p id="gmBoost"
-          class="text-2xl font-bold text-emerald-400 mt-2">
-          +₹15,040
-        </p>
-
-        <p id="gmNewProfit"
-          class="text-xs text-slate-400 mt-2">
-          New projected profit: ₹33,040
-        </p>
-
-      </div>
-
+      <input id="udharSlider" type="range" min="0" max="100" step="1" value="50">
+      <p class="mt-3 text-sm text-slate-300">Projected immediate cash unlocked:
+        <span id="udharCash" class="font-bold text-emerald-400">₹18,000</span>
+      </p>
     </div>
-
-
-    <!-- UDHAR SLIDER -->
-
-    <div>
-
-      <div class="flex justify-between items-center mb-3 gap-3">
-
-        <label for="udharSlider"
-          class="text-sm font-semibold">
-          Udhar Overdue Recovery %
-        </label>
-
-        <span id="udharValue"
-          class="text-sm font-bold text-emerald-400">
-          50%
-        </span>
-
-      </div>
-
-      <input id="udharSlider"
-        type="range"
-        min="0"
-        max="100"
-        step="1"
-        value="50">
-
-      <div class="flex justify-between text-xs text-slate-500 mt-2">
-        <span>0% Recovery</span>
-        <span>100% Recovery</span>
-      </div>
-
-      <div class="mt-4 bg-slate-950 border border-slate-800 rounded-lg p-4">
-
-        <p class="text-xs text-slate-400">
-          Projected Immediate Cash Unlocked
-        </p>
-
-        <p id="udharCash"
-          class="text-2xl font-bold text-emerald-400 mt-2">
-          ₹18,000
-        </p>
-
-        <p class="text-xs text-slate-500 mt-2">
-          Based on an assumed overdue customer credit balance of ₹36,000.
-        </p>
-
-      </div>
-
-    </div>
-
   </section>
 
-
-  <!-- AI REPORT -->
-
-  <section id="reportSection"
-    class="hidden print-card bg-slate-900 border border-slate-800 rounded-xl p-5">
-
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
-
-      <div>
-        <h2 class="text-lg font-semibold">
-          AI CFO Audit Report
-        </h2>
-
-        <p id="reportTimestamp"
-          class="text-xs text-slate-500 mt-1">
-        </p>
-      </div>
-
-      <button id="printBtn"
-        type="button"
-        class="no-print text-sm bg-slate-800 hover:bg-slate-700 border border-slate-700 px-4 py-2 rounded-lg transition">
+  <!-- Report -->
+  <section id="reportSection" class="hidden print-card bg-slate-900 border border-slate-800 rounded-xl p-5">
+    <div class="flex items-center justify-between mb-4 gap-3">
+      <h2 class="text-lg font-semibold">AI CFO Audit Report</h2>
+      <button id="printBtn" type="button"
+        class="no-print text-sm bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 rounded-lg transition">
         📄 Export / Print Audit Report
       </button>
-
     </div>
-
-    <div id="reportBody"
-      class="report-content text-sm leading-relaxed text-slate-200"
-      aria-live="polite">
-    </div>
-
+    <div id="reportBody" class="whitespace-pre-wrap text-sm leading-relaxed text-slate-200"></div>
   </section>
-
-
-  <!-- FOOTER -->
-
-  <footer class="text-center text-xs text-slate-600 py-4 no-print">
-    AI MSME CFO Dashboard · Financial Intelligence Tool
-    <p class="mt-1">
-      Decision-support estimates only. Validate figures before
-      making financial or operational decisions.
-    </p>
-  </footer>
 
 </div>
 
-
 <script>
 (function () {
-
   'use strict';
 
-  // ==========================================
-  // CONFIGURATION
-  // ==========================================
+  // Fallback chain: Primary model -> Backup models
+  var MODELS = ['gemini-3.8-flash', 'gemini-2.5-flash', 'gemini-1.5-flash'];
+  var UDHAR_BASELINE = 36000;
 
-  const MODEL = 'gemini-3.8-flash';
-  const API_BASE =
-    'https://generativelanguage.googleapis.com/v1beta/models/';
-
-  const UDHAR_BASELINE = 36000;
-
-  const STORAGE_KEYS = {
-    apiKey: 'cfo_gemini_key',
-    revenue: 'cfo_revenue',
-    cogs: 'cfo_cogs',
-    opex: 'cfo_opex',
-    context: 'cfo_context'
+  var $ = function (id) { return document.getElementById(id); };
+  var els = {
+    apiKey: $('apiKey'), revenue: $('revenue'), cogs: $('cogs'), opex: $('opex'), context: $('context'),
+    runBtn: $('runBtn'), runSpinner: $('runSpinner'), runLabel: $('runLabel'), inputError: $('inputError'),
+    mGM: $('mGM'), mOM: $('mOM'), mNP: $('mNP'), mHealth: $('mHealth'),
+    simSection: $('simSection'), gmSlider: $('gmSlider'), gmValue: $('gmValue'), gmMinLbl: $('gmMinLbl'),
+    gmBoost: $('gmBoost'), gmNewProfit: $('gmNewProfit'),
+    udharSlider: $('udharSlider'), udharValue: $('udharValue'), udharCash: $('udharCash'),
+    reportSection: $('reportSection'), reportBody: $('reportBody'), printBtn: $('printBtn'),
+    statusBadge: $('statusBadge'), statusDot: $('statusDot'), statusText: $('statusText')
   };
 
+  var inr = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 });
+  function rupees(n) { return (n < 0 ? '-₹' : '₹') + inr.format(Math.abs(Math.round(n))); }
+  function pct(n) { return n.toFixed(1) + '%'; }
 
-  // ==========================================
-  // DOM REFERENCES
-  // ==========================================
-
-  const $ = id => document.getElementById(id);
-
-  const els = {
-    apiKey: $('apiKey'),
-    revenue: $('revenue'),
-    cogs: $('cogs'),
-    opex: $('opex'),
-    context: $('context'),
-
-    runBtn: $('runBtn'),
-    runSpinner: $('runSpinner'),
-    runLabel: $('runLabel'),
-    inputError: $('inputError'),
-
-    mGM: $('mGM'),
-    mOM: $('mOM'),
-    mNP: $('mNP'),
-    mHealth: $('mHealth'),
-
-    simSection: $('simSection'),
-    gmSlider: $('gmSlider'),
-    gmValue: $('gmValue'),
-    gmMinLbl: $('gmMinLbl'),
-    gmMaxLbl: $('gmMaxLbl'),
-    gmBoost: $('gmBoost'),
-    gmNewProfit: $('gmNewProfit'),
-
-    udharSlider: $('udharSlider'),
-    udharValue: $('udharValue'),
-    udharCash: $('udharCash'),
-
-    reportSection: $('reportSection'),
-    reportBody: $('reportBody'),
-    reportTimestamp: $('reportTimestamp'),
-    printBtn: $('printBtn'),
-
-    statusBadge: $('statusBadge'),
-    statusDot: $('statusDot'),
-    statusText: $('statusText')
-  };
-
-
-  // ==========================================
-  // FORMATTING
-  // ==========================================
-
-  const inr = new Intl.NumberFormat('en-IN', {
-    maximumFractionDigits: 0
-  });
-
-  function rupees(value) {
-    const sign = value < 0 ? '-₹' : '₹';
-    return sign + inr.format(Math.abs(Math.round(value)));
-  }
-
-  function pct(value) {
-    return Number(value).toFixed(1) + '%';
-  }
-
-
-  // ==========================================
-  // LOCAL STORAGE
-  // ==========================================
-
-  function storageGet(key) {
-    try {
-      return localStorage.getItem(key);
-    } catch (error) {
-      return null;
-    }
-  }
-
-  function storageSet(key, value) {
-    try {
-      localStorage.setItem(key, value);
-    } catch (error) {
-      console.warn('Unable to save browser storage:', error);
-    }
-  }
+  function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* ignore */ } }
 
   function loadSaved() {
-
-    Object.entries(STORAGE_KEYS).forEach(([field, key]) => {
-
-      const savedValue = storageGet(key);
-
-      if (savedValue !== null && savedValue !== '') {
-        els[field].value = savedValue;
-      }
-
+    var map = { cfo_gemini_key: 'apiKey', cfo_revenue: 'revenue', cfo_cogs: 'cogs', cfo_opex: 'opex', cfo_context: 'context' };
+    Object.keys(map).forEach(function (k) {
+      var v = lsGet(k);
+      if (v !== null && v !== '') els[map[k]].value = v;
     });
-
   }
-
   function saveInputs() {
-
-    Object.entries(STORAGE_KEYS).forEach(([field, key]) => {
-
-      storageSet(key, els[field].value);
-
-    });
-
+    lsSet('cfo_gemini_key', els.apiKey.value.trim());
+    lsSet('cfo_revenue', els.revenue.value);
+    lsSet('cfo_cogs', els.cogs.value);
+    lsSet('cfo_opex', els.opex.value);
+    lsSet('cfo_context', els.context.value);
   }
-
-
-  // ==========================================
-  // STATUS MANAGEMENT
-  // ==========================================
 
   function setStatus(mode) {
-
-    const states = {
-
-      ready: {
-        text: 'Ready',
-        badge: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
-        dot: 'bg-emerald-400'
-      },
-
-      busy: {
-        text: 'Analyzing',
-        badge: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
-        dot: 'bg-amber-400'
-      },
-
-      live: {
-        text: 'Live',
-        badge: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
-        dot: 'bg-emerald-400'
-      },
-
-      error: {
-        text: 'Error',
-        badge: 'bg-red-500/10 text-red-400 border-red-500/30',
-        dot: 'bg-red-400'
-      }
-
-    };
-
-    const state = states[mode];
-
-    els.statusBadge.className =
-      'no-print inline-flex items-center gap-2 self-start px-3 py-2 rounded-full text-xs font-semibold border ' +
-      state.badge;
-
-    els.statusDot.className =
-      'w-2 h-2 rounded-full ' + state.dot;
-
-    els.statusText.textContent = state.text;
-
+    var cfg = {
+      ready:   { text: 'Ready',     cls: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30', dot: 'bg-emerald-400' },
+      busy:    { text: 'Analyzing', cls: 'bg-amber-500/10 text-amber-400 border-amber-500/30',       dot: 'bg-amber-400' },
+      live:    { text: 'Live',      cls: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30', dot: 'bg-emerald-400' },
+      error:   { text: 'Error',     cls: 'bg-red-500/10 text-red-400 border-red-500/30',             dot: 'bg-red-400' }
+    }[mode];
+    els.statusBadge.className = 'no-print inline-flex items-center gap-2 self-start sm:self-auto px-3 py-1 rounded-full text-xs font-semibold border ' + cfg.cls;
+    els.statusDot.className = 'w-2 h-2 rounded-full ' + cfg.dot;
+    els.statusText.textContent = cfg.text;
   }
-
-
-  // ==========================================
-  // FINANCIAL CALCULATIONS
-  // ==========================================
 
   function readNumbers() {
-
-    const revenue = Number(els.revenue.value);
-    const cogs = Number(els.cogs.value);
-    const opex = Number(els.opex.value);
-
-    const valid =
-      els.revenue.value.trim() !== '' &&
-      els.cogs.value.trim() !== '' &&
-      els.opex.value.trim() !== '' &&
-      Number.isFinite(revenue) &&
-      Number.isFinite(cogs) &&
-      Number.isFinite(opex) &&
-      revenue > 0 &&
-      cogs >= 0 &&
-      opex >= 0;
-
-    return {
-      revenue,
-      cogs,
-      opex,
-      valid
-    };
-
+    var r = parseFloat(els.revenue.value), c = parseFloat(els.cogs.value), o = parseFloat(els.opex.value);
+    return { revenue: r, cogs: c, opex: o, valid: isFinite(r) && isFinite(c) && isFinite(o) && r > 0 && c >= 0 && o >= 0 };
   }
-
-  function compute(numbers) {
-
-    const grossProfit = numbers.revenue - numbers.cogs;
-    const netProfit = grossProfit - numbers.opex;
-
-    return {
-      grossProfit,
-      netProfit,
-
-      grossMargin:
-        grossProfit / numbers.revenue * 100,
-
-      operatingMargin:
-        netProfit / numbers.revenue * 100
-    };
-
+  function compute(n) {
+    var gp = n.revenue - n.cogs;
+    var np = gp - n.opex;
+    return { gp: gp, np: np, gm: gp / n.revenue * 100, om: np / n.revenue * 100 };
   }
-
-  function healthOf(operatingMargin) {
-
-    if (operatingMargin > 10) {
-
-      return {
-        label: 'Healthy',
-        classes:
-          'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-      };
-
-    }
-
-    if (operatingMargin > 0) {
-
-      return {
-        label: 'Tight Margin',
-        classes:
-          'bg-amber-500/10 text-amber-400 border-amber-500/30'
-      };
-
-    }
-
-    return {
-      label: 'Loss Making',
-      classes:
-        'bg-red-500/10 text-red-400 border-red-500/30'
-    };
-
+  function healthOf(om) {
+    if (om > 10) return { label: 'Healthy', cls: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' };
+    if (om > 0)  return { label: 'Tight Margin', cls: 'bg-amber-500/10 text-amber-400 border-amber-500/30' };
+    return { label: 'Loss Making', cls: 'bg-red-500/10 text-red-400 border-red-500/30' };
   }
-
-
-  // ==========================================
-  // LIVE METRICS
-  // ==========================================
 
   function renderMetrics() {
-
-    const numbers = readNumbers();
-
-    if (!numbers.valid) {
-
-      els.mGM.textContent = '-';
-      els.mOM.textContent = '-';
-      els.mNP.textContent = '-';
+    var n = readNumbers();
+    if (!n.valid) {
+      els.mGM.textContent = els.mOM.textContent = els.mNP.textContent = '-';
       els.mHealth.textContent = '-';
-
-      els.mHealth.className =
-        'inline-block mt-3 px-3 py-1 rounded-full text-sm font-semibold border bg-slate-800 text-slate-300 border-slate-700';
-
+      els.mHealth.className = 'badge-print inline-block mt-2 px-3 py-1 rounded-full text-sm font-semibold border bg-slate-800 text-slate-300 border-slate-700';
       return null;
-
     }
-
-    const metrics = compute(numbers);
-
-    els.mGM.textContent = pct(metrics.grossMargin);
-    els.mOM.textContent = pct(metrics.operatingMargin);
-    els.mNP.textContent = rupees(metrics.netProfit);
-
-    els.mNP.className =
-      'text-2xl font-bold mt-2 ' +
-      (metrics.netProfit < 0 ? 'text-red-400' : 'text-slate-100');
-
-    const health = healthOf(metrics.operatingMargin);
-
-    els.mHealth.textContent = health.label;
-
-    els.mHealth.className =
-      'inline-block mt-3 px-3 py-1 rounded-full text-sm font-semibold border ' +
-      health.classes;
-
-    return {
-      numbers,
-      metrics
-    };
-
+    var m = compute(n);
+    els.mGM.textContent = pct(m.gm);
+    els.mOM.textContent = pct(m.om);
+    els.mNP.textContent = rupees(m.np);
+    els.mNP.className = 'text-2xl font-bold mt-1 ' + (m.np < 0 ? 'text-red-400' : 'text-slate-100');
+    var h = healthOf(m.om);
+    els.mHealth.textContent = h.label;
+    els.mHealth.className = 'badge-print inline-block mt-2 px-3 py-1 rounded-full text-sm font-semibold border ' + h.cls;
+    return { n: n, m: m };
   }
-
-
-  // ==========================================
-  // SCENARIO SIMULATOR
-  // ==========================================
 
   function setupSliders(resetDefault) {
-
-    const numbers = readNumbers();
-
-    if (!numbers.valid) return;
-
-    const metrics = compute(numbers);
-    const currentGM = metrics.grossMargin;
-
-    const min = currentGM;
-    const max = Math.max(40, currentGM);
-
+    var n = readNumbers();
+    if (!n.valid) return;
+    var m = compute(n);
+    var min = Math.max(0, Math.min(m.gm, 40));
+    var max = Math.max(40, m.gm);
     els.gmSlider.min = min.toFixed(1);
     els.gmSlider.max = max.toFixed(1);
-
-    els.gmMinLbl.textContent =
-      'Current: ' + pct(currentGM);
-
-    els.gmMaxLbl.textContent = pct(max);
-
+    els.gmMinLbl.textContent = 'Current ' + pct(m.gm);
     if (resetDefault) {
-
-      const defaultTarget = Math.min(
-        currentGM + 4,
-        max
-      );
-
-      els.gmSlider.value = defaultTarget.toFixed(1);
-
-      els.udharSlider.value = 50;
-
-    } else {
-
-      const previous = Number(els.gmSlider.value);
-
-      els.gmSlider.value = Math.min(
-        Math.max(previous, min),
-        max
-      ).toFixed(1);
-
+      els.gmSlider.value = Math.min(m.gm + 4, max).toFixed(1);
     }
+    updateSim();
+  }
+  function updateSim() {
+    var n = readNumbers();
+    if (!n.valid) return;
+    var m = compute(n);
+    var target = parseFloat(els.gmSlider.value);
+    var boost = n.revenue * (target - m.gm) / 100;
+    els.gmValue.textContent = pct(target);
+    els.gmBoost.textContent = (boost >= 0 ? '+' : '') + rupees(boost);
+    els.gmNewProfit.textContent = '(net profit: ' + rupees(m.np) + ' to ' + rupees(m.np + boost) + ')';
 
-    updateSimulator();
-
+    var rec = parseFloat(els.udharSlider.value);
+    els.udharValue.textContent = rec + '%';
+    els.udharCash.textContent = rupees(UDHAR_BASELINE * rec / 100);
   }
 
-  function updateSimulator() {
-
-    const numbers = readNumbers();
-
-    if (!numbers.valid) return;
-
-    const metrics = compute(numbers);
-
-    const targetGM = Number(els.gmSlider.value);
-
-    // COGS reduction / gross profit improvement,
-    // assuming revenue remains unchanged.
-
-    const profitBoost =
-      numbers.revenue *
-      (targetGM - metrics.grossMargin) / 100;
-
-    const projectedProfit =
-      metrics.netProfit + profitBoost;
-
-    els.gmValue.textContent = pct(targetGM);
-
-    els.gmBoost.textContent =
-      (profitBoost >= 0 ? '+' : '') +
-      rupees(profitBoost);
-
-    els.gmNewProfit.textContent =
-      'Projected monthly operating surplus: ' +
-      rupees(projectedProfit);
-
-    const recovery = Number(els.udharSlider.value);
-
-    const cashUnlocked =
-      UDHAR_BASELINE * recovery / 100;
-
-    els.udharValue.textContent =
-      recovery + '%';
-
-    els.udharCash.textContent =
-      rupees(cashUnlocked);
-
-  }
-
-
-  // ==========================================
-  // INPUT ERRORS
-  // ==========================================
-
-  function showInputError(message) {
-
-    els.inputError.textContent = message;
-
+  function showInputError(msg) {
+    els.inputError.textContent = msg;
     els.inputError.classList.remove('hidden');
-
   }
+  function clearInputError() { els.inputError.classList.add('hidden'); els.inputError.textContent = ''; }
 
-  function clearInputError() {
-
-    els.inputError.classList.add('hidden');
-
-    els.inputError.textContent = '';
-
-  }
-
-
-  // ==========================================
-  // SAFE MARKDOWN RENDERER
-  // ==========================================
-
-  // Supports headings, paragraphs, lists, bold,
-  // inline code and plain text.
-  // Never inserts model output using innerHTML.
-
-  function appendInline(parent, text) {
-
-    const pattern =
-      /(\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*)/g;
-
-    let lastIndex = 0;
-    let match;
-
-    while ((match = pattern.exec(text)) !== null) {
-
-      if (match.index > lastIndex) {
-
-        parent.appendChild(
-          document.createTextNode(
-            text.slice(lastIndex, match.index)
-          )
-        );
-
-      }
-
-      const token = match[0];
-
-      let element;
-
-      if (token.startsWith('**')) {
-
-        element = document.createElement('strong');
-        element.textContent = token.slice(2, -2);
-
-      } else if (token.startsWith('`')) {
-
-        element = document.createElement('code');
-        element.textContent = token.slice(1, -1);
-
-      } else {
-
-        element = document.createElement('em');
-        element.textContent = token.slice(1, -1);
-
-      }
-
-      parent.appendChild(element);
-
-      lastIndex = pattern.lastIndex;
-
-    }
-
-    if (lastIndex < text.length) {
-
-      parent.appendChild(
-        document.createTextNode(text.slice(lastIndex))
-      );
-
-    }
-
-  }
-
-  function renderMarkdown(markdown) {
-
-    const fragment = document.createDocumentFragment();
-
-    const lines = markdown.split(/\r?\n/);
-
-    let list = null;
-
-    function closeList() {
-      list = null;
-    }
-
-    lines.forEach(line => {
-
-      const trimmed = line.trim();
-
-      if (!trimmed) {
-        closeList();
-        return;
-      }
-
-      const heading = trimmed.match(/^#{1,3}\s+(.+)$/);
-
-      if (heading) {
-
-        closeList();
-
-        const h2 = document.createElement('h2');
-
-        appendInline(h2, heading[1]);
-
-        fragment.appendChild(h2);
-
-        return;
-
-      }
-
-      const bullet = trimmed.match(/^[-*]\s+(.+)$/);
-
-      const numbered = trimmed.match(/^\d+[.)]\s+(.+)$/);
-
-      if (bullet || numbered) {
-
-        const isNumbered = Boolean(numbered);
-
-        const desiredTag = isNumbered ? 'ol' : 'ul';
-
-        if (!list || list.tagName.toLowerCase() !== desiredTag) {
-
-          closeList();
-
-          list = document.createElement(desiredTag);
-
-          fragment.appendChild(list);
-
-        }
-
-        const li = document.createElement('li');
-
-        appendInline(
-          li,
-          isNumbered ? numbered[1] : bullet[1]
-        );
-
-        list.appendChild(li);
-
-        return;
-
-      }
-
-      closeList();
-
-      const paragraph = document.createElement('p');
-
-      appendInline(paragraph, trimmed);
-
-      fragment.appendChild(paragraph);
-
-    });
-
-    els.reportBody.replaceChildren(fragment);
-
-  }
-
-
-  function showReportError(message) {
-
+  function showReportError(msg) {
     els.reportSection.classList.remove('hidden');
-
-    els.reportBody.className =
-      'report-content error-box text-sm leading-relaxed text-red-300';
-
-    els.reportBody.textContent =
-      'Unable to generate the CFO audit report.\n\n' + message;
-
-    els.reportTimestamp.textContent =
-      'Diagnostic unsuccessful · ' +
-      new Date().toLocaleString('en-IN');
-
+    els.reportBody.className = 'whitespace-pre-wrap text-sm leading-relaxed text-red-300';
+    els.reportBody.textContent = 'Could not generate the audit.\n\n' + msg;
   }
 
-
-  // ==========================================
-  // AI CFO PROMPT
-  // ==========================================
-
-  function buildPrompt(numbers, metrics, context) {
-
-    return `You are a Senior Fractional CFO advising Indian MSMEs, including Kirana stores, retail businesses, distributors and small manufacturers.
-
-Your responsibility is to provide financially rigorous, practical and commercially intelligent advice.
-
-Analyze the following exact monthly financial figures. All amounts are in Indian Rupees.
-
-FINANCIAL DATA
-
-Revenue: ₹${inr.format(numbers.revenue)}
-COGS: ₹${inr.format(numbers.cogs)}
-Gross Profit: ₹${inr.format(metrics.grossProfit)}
-Gross Margin: ${metrics.grossMargin.toFixed(2)}%
-Operating Expenses: ₹${inr.format(numbers.opex)}
-Operating Surplus / Profit Proxy: ₹${inr.format(metrics.netProfit)}
-Operating Margin: ${metrics.operatingMargin.toFixed(2)}%
-
-Assumed outstanding customer Udhar credit:
-₹${inr.format(UDHAR_BASELINE)}
-
-BUSINESS CONTEXT
-
-${context || 'No additional business context supplied.'}
-
-YOUR ASSIGNMENT
-
-Prepare a concise but insightful CFO diagnostic report with exactly these four sections.
-
-## 1. Financial Health Diagnostic
-
-- Analyze gross margin, operating margin and profitability.
-- Assess financial fragility and the business's ability to absorb revenue or cost shocks.
-- Identify the most important financial weakness.
-- Explain the implications using the actual numbers.
-
-## 2. Working Capital & Cash Flow Assessment
-
-- Analyze the assumed ₹36,000 Udhar credit exposure.
-- Explain how unpaid customer balances affect liquidity and working capital.
-- Recommend practical collection policies, credit limits and payment controls.
-- Distinguish cash recovery from accounting profit. Do not treat recovered receivables as new revenue.
-
-## 3. Competitive Response Strategy
-
-- Address competition from quick-commerce applications such as Blinkit.
-- Recommend ways to compete through product differentiation, local customer relationships, service, pricing and retention.
-- Avoid indiscriminate discounting.
-- Explain how to protect contribution margins.
-
-## 4. Top 3 Actionable CFO Next Steps
-
-Give exactly three prioritized actions.
-
-For each action include:
-- What the owner should do.
-- How to implement it.
-- The expected financial or operational impact.
-- A realistic timeframe.
-
-IMPORTANT RULES
-
-1. Use the exact financial figures supplied. Never invent additional company data.
-2. Clearly distinguish assumptions from verified facts.
-3. Do not assume that all operating expenses, taxes, interest or depreciation are fully captured.
-4. Treat the calculated profit as an operating surplus proxy, not necessarily audited net income.
-5. Use specific rupee estimates only when mathematically supported or clearly labelled as assumptions.
-6. Do not present recovered Udhar as additional profit.
-7. Keep the report under 500 words.
-8. Use concise, professional language suitable for an Indian small-business owner.
-9. Use bullet points where appropriate.
-10. Do not add an introduction or conclusion outside the four requested sections.`;
-
+  function buildPrompt(n, m, ctx) {
+    return [
+      'You are a Senior Fractional CFO advising Indian MSMEs (retail stores, Kirana shops, small manufacturers). You are direct, numbers-first and practical.',
+      '',
+      'Analyze this business using the exact figures below (monthly, in Indian Rupees):',
+      '- Revenue: ₹' + inr.format(n.revenue),
+      '- COGS: ₹' + inr.format(n.cogs),
+      '- Gross Profit: ₹' + inr.format(m.gp),
+      '- Gross Margin: ' + m.gm.toFixed(1) + '%',
+      '- OPEX: ₹' + inr.format(n.opex),
+      '- Net Profit: ₹' + inr.format(m.np),
+      '- Operating Margin: ' + m.om.toFixed(1) + '%',
+      '- Customer credit (Udhar) baseline assumed: ₹' + inr.format(UDHAR_BASELINE),
+      '- Business context and challenges: ' + (ctx || 'Not provided'),
+      '',
+      'Deliver a concise report with exactly these 4 sections, using these headings:',
+      '## 1. Financial Health Diagnostic',
+      'Margin breakdown and a fragility assessment.',
+      '## 2. Working Capital & Cash Flow Assessment',
+      'Address the Udhar credit lockup, its effect on cash, and how to recover and prevent it.',
+      '## 3. Competitive Response Strategy',
+      'How to handle quick-commerce apps and discount pressure without destroying margin.',
+      '## 4. Top 3 Actionable CFO Next Steps',
+      'A prioritized, numbered execution plan with a rupee impact estimate for each step where possible.',
+      '',
+      'Rules: reference the actual numbers, use short bullet points with "-", no tables, no filler, plain text with the headings above only. Keep it under 500 words.'
+    ].join('\n');
   }
 
+  // Robust Fetch with Retries & Fallback Models for 503/429 errors
+  async function callGeminiWithFallback(key, promptText) {
+    var lastError = null;
 
-  // ==========================================
-  // GEMINI API
-  // ==========================================
+    for (var i = 0; i < MODELS.length; i++) {
+      var currentModel = MODELS[i];
+      for (var attempt = 1; attempt <= 2; attempt++) {
+        try {
+          var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + currentModel + ':generateContent?key=' + encodeURIComponent(key);
+          var res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ role: 'user', parts: [{ text: promptText }] }],
+              generationConfig: { temperature: 0.4, maxOutputTokens: 2048 }
+            })
+          });
 
-  async function callGemini(apiKey, prompt) {
+          var data = null;
+          try { data = await res.json(); } catch (e) { data = null; }
 
-    const endpoint =
-      API_BASE +
-      MODEL +
-      ':generateContent?key=' +
-      encodeURIComponent(apiKey);
-
-    const controller = new AbortController();
-
-    const timeout = setTimeout(
-      () => controller.abort(),
-      60000
-    );
-
-    try {
-
-      const response = await fetch(endpoint, {
-
-        method: 'POST',
-
-        headers: {
-          'Content-Type': 'application/json'
-        },
-
-        body: JSON.stringify({
-
-          contents: [
-            {
-              role: 'user',
-              parts: [
-                { text: prompt }
-              ]
-            }
-          ],
-
-          generationConfig: {
-            temperature: 0.4,
-            maxOutputTokens: 2048
+          if (res.ok) {
+            var cand = data && data.candidates && data.candidates[0];
+            var parts = cand && cand.content && cand.content.parts;
+            var text = parts ? parts.map(function (p) { return p.text || ''; }).join('').trim() : '';
+            if (text) return text;
           }
 
-        }),
+          var apiMsg = data && data.error && data.error.message ? data.error.message : ('HTTP ' + res.status);
 
-        signal: controller.signal
+          // Handle 503 Overload or 429 Rate Limit by retrying after delay
+          if (res.status === 503 || res.status === 429) {
+            lastError = new Error('Model ' + currentModel + ' busy (HTTP ' + res.status + '). Retrying...');
+            await new Promise(function (r) { setTimeout(r, 1500 * attempt); });
+            continue;
+          }
 
-      });
+          // Hard API errors (Invalid API Key)
+          if (res.status === 400 && /api key/i.test(apiMsg)) throw new Error('Invalid API key. Check the key and try again.\n\nDetails: ' + apiMsg);
+          if (res.status === 401 || res.status === 403) throw new Error('API key rejected or lacks permission.\n\nDetails: ' + apiMsg);
 
-      let data;
-
-      try {
-
-        data = await response.json();
-
-      } catch (error) {
-
-        throw new Error(
-          'The API returned an unreadable response. Please try again.'
-        );
-
+          throw new Error('API error (' + res.status + '): ' + apiMsg);
+        } catch (err) {
+          lastError = err;
+          if (err.message.indexOf('Invalid API key') !== -1 || err.message.indexOf('API key rejected') !== -1) {
+            throw err;
+          }
+        }
       }
-
-      if (!response.ok) {
-
-        const apiMessage =
-          data?.error?.message ||
-          'HTTP ' + response.status;
-
-        if (response.status === 400) {
-
-          throw new Error(
-            'Invalid request or API key configuration.\n\n' +
-            apiMessage
-          );
-
-        }
-
-        if (response.status === 401 || response.status === 403) {
-
-          throw new Error(
-            'The API key was rejected or does not have the required permissions.\n\n' +
-            apiMessage
-          );
-
-        }
-
-        if (response.status === 404) {
-
-          throw new Error(
-            'The requested Gemini model was not found or is unavailable to this API key. Check model availability and the MODEL setting.\n\n' +
-            apiMessage
-          );
-
-        }
-
-        if (response.status === 429) {
-
-          throw new Error(
-            'Gemini API rate limit or quota exceeded. Check your Google AI Studio quota and try again later.\n\n' +
-            apiMessage
-          );
-
-        }
-
-        throw new Error(
-          'Gemini API error (' +
-          response.status +
-          ').\n\n' +
-          apiMessage
-        );
-
-      }
-
-      const candidate = data?.candidates?.[0];
-
-      const parts = candidate?.content?.parts || [];
-
-      const report = parts
-        .map(part => part.text || '')
-        .join('')
-        .trim();
-
-      if (!report) {
-
-        const reason =
-          data?.promptFeedback?.blockReason ||
-          candidate?.finishReason ||
-          'No text was returned';
-
-        throw new Error(
-          'Gemini returned no usable report.\nReason: ' + reason
-        );
-
-      }
-
-      return report;
-
-    } finally {
-
-      clearTimeout(timeout);
-
     }
-
+    throw lastError || new Error('Google Gemini servers are currently experiencing high demand across all models. Please try again in a few seconds.');
   }
-
-
-  // ==========================================
-  // RUN DIAGNOSTIC
-  // ==========================================
 
   async function runDiagnostic() {
-
     clearInputError();
+    var key = els.apiKey.value.trim();
+    var n = readNumbers();
 
-    const apiKey = els.apiKey.value.trim();
-
-    const calculation = renderMetrics();
-
-    if (!apiKey) {
-
-      showInputError(
-        'Please enter your Google Gemini API key before running the diagnostic.'
-      );
-
-      setStatus('error');
-
-      els.apiKey.focus();
-
-      return;
-
-    }
-
-    if (!calculation) {
-
-      showInputError(
-        'Please enter valid financial figures. Revenue must be greater than zero. COGS and OPEX must be zero or greater.'
-      );
-
-      setStatus('error');
-
-      return;
-
-    }
-
-    // Persist all inputs.
+    if (!key) { showInputError('Please enter your Gemini API key.'); setStatus('error'); return; }
+    if (!n.valid) { showInputError('Enter valid numbers. Revenue must be greater than 0, and COGS and OPEX cannot be negative.'); setStatus('error'); return; }
 
     saveInputs();
-
-    // Reveal the simulator and initialize scenarios.
-
+    var calc = renderMetrics();
     els.simSection.classList.remove('hidden');
-
     setupSliders(true);
 
-    // Loading state.
-
     els.runBtn.disabled = true;
-
     els.runSpinner.classList.remove('hidden');
-
     els.runLabel.textContent = 'Analyzing...';
-
     setStatus('busy');
 
-    // Show report container.
-
     els.reportSection.classList.remove('hidden');
-
-    els.reportBody.className =
-      'report-content text-sm leading-relaxed text-slate-400';
-
-    els.reportBody.textContent =
-      'Your AI CFO is analyzing the business financials, working capital and competitive position...';
-
-    els.reportTimestamp.textContent =
-      'Analysis in progress';
+    els.reportBody.className = 'whitespace-pre-wrap text-sm leading-relaxed text-slate-400';
+    els.reportBody.textContent = 'Your CFO is reviewing the numbers...';
 
     try {
+      var promptText = buildPrompt(n, calc.m, els.context.value.trim());
+      var responseText = await callGeminiWithFallback(key, promptText);
 
-      const prompt = buildPrompt(
-        calculation.numbers,
-        calculation.metrics,
-        els.context.value.trim()
-      );
-
-      const report = await callGemini(apiKey, prompt);
-
-      renderMarkdown(report);
-
-      els.reportBody.className =
-        'report-content text-sm leading-relaxed text-slate-200';
-
-      els.reportTimestamp.textContent =
-        'Generated: ' +
-        new Date().toLocaleString('en-IN');
-
+      els.reportBody.className = 'whitespace-pre-wrap text-sm leading-relaxed text-slate-200';
+      els.reportBody.textContent = responseText;
       setStatus('live');
-
-    } catch (error) {
-
-      let message = error?.message || String(error);
-
-      if (error?.name === 'AbortError') {
-
-        message =
-          'The request timed out after 60 seconds. Please check your connection and retry.';
-
-      } else if (error instanceof TypeError) {
-
-        message =
-          'Network or browser connection error. Check your internet connection. If the API is reachable but blocked by the browser, check the browser console for CORS errors.';
-
-      }
-
-      showReportError(message);
-
+    } catch (err) {
+      var msg = err && err.message ? err.message : String(err);
+      if (err instanceof TypeError) msg = 'Network error. Check your internet connection and try again.';
+      showReportError(msg);
       setStatus('error');
-
     } finally {
-
       els.runBtn.disabled = false;
-
       els.runSpinner.classList.add('hidden');
-
       els.runLabel.textContent = 'Run CFO Diagnostic';
-
     }
-
   }
 
-
-  // ==========================================
-  // EVENT LISTENERS
-  // ==========================================
-
-  ['revenue', 'cogs', 'opex'].forEach(id => {
-
-    els[id].addEventListener('input', () => {
-
+  ['revenue', 'cogs', 'opex'].forEach(function (id) {
+    els[id].addEventListener('input', function () {
       renderMetrics();
-
-      if (!els.simSection.classList.contains('hidden')) {
-        setupSliders(false);
-      }
-
+      if (!els.simSection.classList.contains('hidden')) setupSliders(false);
     });
-
   });
+  els.gmSlider.addEventListener('input', updateSim);
+  els.udharSlider.addEventListener('input', updateSim);
+  els.runBtn.addEventListener('click', runDiagnostic);
+  els.printBtn.addEventListener('click', function () { window.print(); });
 
-  els.gmSlider.addEventListener(
-    'input',
-    updateSimulator
-  );
-
-  els.udharSlider.addEventListener(
-    'input',
-    updateSimulator
-  );
-
-  els.runBtn.addEventListener(
-    'click',
-    runDiagnostic
-  );
-
-  els.printBtn.addEventListener(
-    'click',
-    () => window.print()
-  );
-
-
-  // ==========================================
-  // INITIALIZATION
-  // ==========================================
-
-  function initialize() {
-
+  document.addEventListener('DOMContentLoaded', function () {
     loadSaved();
-
     renderMetrics();
-
-  }
-
-  if (document.readyState === 'loading') {
-
-    document.addEventListener(
-      'DOMContentLoaded',
-      initialize,
-      { once: true }
-    );
-
-  } else {
-
-    initialize();
-
-  }
-
+  });
+  if (document.readyState !== 'loading') { loadSaved(); renderMetrics(); }
 })();
 </script>
-
 </body>
 </html>
